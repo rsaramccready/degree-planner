@@ -1,0 +1,16 @@
+services:
+  hackathon:
+    build: .
+    stdin_open: true
+    tty: true
+    image: hackathon:latest
+    volumes:
+      - .:/rails
+    ports:
+      - "3000:3000"
+  tailwind:
+    image: hackathon:latest
+    tty: true
+    command: "tailwind-compose"
+    volumes:
+      - .:/rails
