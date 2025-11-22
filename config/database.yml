@@ -25,3 +25,8 @@ production:
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   url: <%= ENV['DATABASE_URL'] %>
+  # Add connection timeout and statement timeout to prevent hanging
+  connect_timeout: 5
+  checkout_timeout: 5
+  variables:
+    statement_timeout: 10000

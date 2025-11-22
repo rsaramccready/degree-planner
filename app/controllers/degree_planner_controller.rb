@@ -16,7 +16,8 @@ class DegreePlannerController < ApplicationController
     end
 
     @course = Course.find(session[:course_id])
-    @subjects = @course.subjects.order(:code)
+    # Load all subjects at once to avoid N+1 queries
+    @subjects = @course.subjects.order(:code).to_a
   end
 
   def submit_step1
@@ -52,8 +53,8 @@ class DegreePlannerController < ApplicationController
     @start_semester = session[:start_semester]
     @grades = session[:grades] || {}
 
-    # Get all subjects
-    all_subjects = @course.subjects.to_a
+    # Get all subjects at once with eager loading to avoid N+1 queries
+    all_subjects = @course.subjects.select(:id, :code, :name, :credit_points, :unit_type, :prerequisites, :semester_availability, :course_id).to_a
     completed_subjects = all_subjects.select { |s| @completed_subject_ids.include?(s.id.to_s) }
 
     # Only plan for subjects marked as "want to complete" that aren't already completed
