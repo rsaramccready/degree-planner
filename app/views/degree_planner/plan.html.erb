@@ -1,27 +1,46 @@
 <div class="w-full max-w-7xl mx-auto px-4 py-8">
-  <h1 class="text-4xl font-bold mb-4">Your Degree Plan</h1>
+  <h1 class="text-4xl font-bold" style="margin-top: 32px; margin-bottom: 20px;">Your Degree Plan</h1>
 
-  <p class="text-gray-600 mb-6">
+  <p class="text-gray-600 mb-12" style="font-size: 16px; line-height: 1.8; margin-bottom: 48px;">
     This plan shows the optimal order to complete your remaining subjects based on prerequisites.
     Each semester contains up to 4 subjects.
   </p>
 
-  <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded">
-    <p class="font-bold">Plan Generated!</p>
-    <p>Starting <%= @start_semester == "1" ? "Semester 1" : "Semester 2" %>, <%= @start_year %></p>
-    <div class="mt-2">
-      <% required_cp = @course.name.include?("Information Technology") ? 288 : 384 %>
-      <p><strong>Completed:</strong> <%= @total_completed_cp %> CP</p>
-      <p><strong>Planned:</strong> <%= @total_planned_cp %> CP</p>
-      <p><strong>Total:</strong> <%= @total_cp %> / <%= required_cp %> CP
-        <% if @total_cp < required_cp %>
-          <span class="text-red-700">(Need <%= required_cp - @total_cp %> more CP)</span>
-        <% elsif @total_cp > required_cp %>
-          <span class="text-yellow-700">(<%= @total_cp - required_cp %> CP over requirement)</span>
-        <% else %>
-          <span class="text-green-900">✓ Complete!</span>
-        <% end %>
-      </p>
+  <div style="background-color: #d1fae5; border-left: 6px solid #10b981; padding: 28px; margin-bottom: 40px; border-radius: 8px;">
+    <div style="display: flex; justify-content: space-between; align-items: start; gap: 24px;">
+      <div style="flex: 1;">
+        <h2 style="font-size: 22px; font-weight: bold; color: #065f46; margin: 0 0 12px 0;">✓ Plan Generated!</h2>
+        <p style="font-size: 16px; color: #047857; margin-bottom: 20px;">Starting <%= @start_semester == "1" ? "Semester 1" : "Semester 2" %>, <%= @start_year %></p>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+          <div style="background-color: white; padding: 16px; border-radius: 6px; border: 1px solid #a7f3d0;">
+            <div style="font-size: 13px; color: #065f46; font-weight: 600; margin-bottom: 4px;">Completed</div>
+            <div style="font-size: 24px; font-weight: bold; color: #059669;"><%= @total_completed_cp %> CP</div>
+          </div>
+
+          <div style="background-color: white; padding: 16px; border-radius: 6px; border: 1px solid #a7f3d0;">
+            <div style="font-size: 13px; color: #065f46; font-weight: 600; margin-bottom: 4px;">Planned</div>
+            <div style="font-size: 24px; font-weight: bold; color: #059669;"><%= @total_planned_cp %> CP</div>
+          </div>
+
+          <div style="background-color: white; padding: 16px; border-radius: 6px; border: 1px solid #a7f3d0;">
+            <div style="font-size: 13px; color: #065f46; font-weight: 600; margin-bottom: 4px;">Total Planned</div>
+            <div style="font-size: 24px; font-weight: bold; color: #059669;">
+              <%= @total_cp %> / <%= @course.name.include?("Information Technology") ? 288 : 384 %> CP
+            </div>
+            <div style="font-size: 14px; margin-top: 6px; font-weight: 600;">
+              <% required_cp = @course.name.include?("Information Technology") ? 288 : 384 %>
+              <% if @total_cp < required_cp %>
+                <span style="color: #dc2626;">Need <%= required_cp - @total_cp %> more CP</span>
+              <% elsif @total_cp > required_cp %>
+                <span style="color: #f59e0b;"><%= @total_cp - required_cp %> CP over</span>
+              <% else %>
+                <span style="color: #059669;">✓ Complete!</span>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -39,11 +58,11 @@
       <%= hidden_field_tag 'start_year', @start_year %>
       <%= hidden_field_tag 'start_semester', @start_semester %>
 
-      <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 32px; margin-bottom: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
           <div>
-            <h2 style="font-size: 20px; font-weight: bold; color: #374151; margin: 0;">✓ Completed Subjects</h2>
-            <p style="font-size: 14px; color: #6b7280; margin-top: 4px;">
+            <h2 style="font-size: 22px; font-weight: bold; color: #374151; margin: 0 0 8px 0;">✓ Completed Subjects</h2>
+            <p style="font-size: 14px; color: #6b7280; margin-top: 8px;">
               Click on a card to select/update the grade for each subject.
             </p>
           </div>
@@ -109,12 +128,12 @@
           </colgroup>
           <thead style="background-color: #f9fafb; border-bottom: 2px solid #e5e7eb;">
             <tr>
-              <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Semester</th>
-              <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Code</th>
-              <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Unit Name</th>
-              <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Prerequisites</th>
-              <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Type</th>
-              <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">CP</th>
+              <th style="padding: 16px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Semester</th>
+              <th style="padding: 16px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Code</th>
+              <th style="padding: 16px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Unit Name</th>
+              <th style="padding: 16px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Prerequisites</th>
+              <th style="padding: 16px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Type</th>
+              <th style="padding: 16px; text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">CP</th>
             </tr>
           </thead>
           <tbody>
@@ -122,31 +141,31 @@
               <% semester_data[:subjects].each_with_index do |subject, subj_index| %>
                 <tr style="border-bottom: 1px solid #e5e7eb; <%= 'background-color: #f9fafb;' if index.even? %>">
                   <% if subj_index == 0 %>
-                    <td rowspan="<%= semester_data[:subjects].count %>" style="padding: 12px; font-weight: bold; vertical-align: top; border-right: 2px solid #e5e7eb;">
+                    <td rowspan="<%= semester_data[:subjects].count %>" style="padding: 16px; font-weight: bold; vertical-align: top; border-right: 2px solid #e5e7eb;">
                       <div style="font-size: 14px; color: #7c3aed;">Year <%= semester_data[:year] %></div>
-                      <div style="font-size: 16px; margin-top: 4px;">Semester <%= semester_data[:semester] %></div>
-                      <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">
+                      <div style="font-size: 17px; margin-top: 6px;">Semester <%= semester_data[:semester] %></div>
+                      <div style="font-size: 12px; color: #6b7280; margin-top: 10px;">
                         <%= semester_data[:subjects].count %> units<br>
                         <%= semester_data[:subjects].sum { |s| s.credit_points || 0 } %> CP
                       </div>
                     </td>
                   <% end %>
-                  <td style="padding: 12px;">
+                  <td style="padding: 16px;">
                     <span style="display: inline-block; padding: 4px 8px; background-color: #dbeafe; color: #1e40af; border-radius: 4px; font-family: monospace; font-size: 12px; font-weight: 600;">
                       <%= subject.code %>
                     </span>
                   </td>
-                  <td style="padding: 12px;">
+                  <td style="padding: 16px;">
                     <div style="font-weight: 500;"><%= subject.name %></div>
                   </td>
-                  <td style="padding: 12px; font-size: 12px; color: #6b7280;">
+                  <td style="padding: 16px; font-size: 12px; color: #6b7280;">
                     <% if subject.prerequisites.present? %>
                       <%= subject.prerequisites %>
                     <% else %>
                       <span style="color: #9ca3af;">None</span>
                     <% end %>
                   </td>
-                  <td style="padding: 12px; font-size: 11px;">
+                  <td style="padding: 16px; font-size: 11px;">
                     <span style="display: inline-block; padding: 2px 6px; background-color: #fef3c7; color: #92400e; border-radius: 4px; font-weight: 500;">
                       <%= subject.unit_type %>
                     </span>
@@ -162,24 +181,24 @@
       </div>
     </div>
 
-    <div class="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
-      <h3 class="text-xl font-bold text-center mb-4">Degree Summary</h3>
-      <div class="grid grid-cols-3 gap-6 max-w-2xl mx-auto">
-        <div class="text-center">
-          <div class="text-3xl font-bold text-green-600"><%= @semester_plan.count %></div>
-          <div class="text-sm text-gray-600">Semesters</div>
+    <div style="background-color: #d1fae5; border-left: 6px solid #10b981; padding: 28px; margin-bottom: 40px; border-radius: 8px;">
+      <h3 style="font-size: 22px; font-weight: bold; color: #065f46; margin: 0 0 20px 0; text-align: center;">📊 Degree Summary</h3>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+        <div style="background-color: white; padding: 20px; border-radius: 6px; border: 1px solid #a7f3d0; text-align: center;">
+          <div style="font-size: 32px; font-weight: bold; color: #059669;"><%= @semester_plan.count %></div>
+          <div style="font-size: 14px; color: #065f46; margin-top: 6px;">Semesters</div>
         </div>
-        <div class="text-center">
-          <div class="text-3xl font-bold text-green-600">
+        <div style="background-color: white; padding: 20px; border-radius: 6px; border: 1px solid #a7f3d0; text-align: center;">
+          <div style="font-size: 32px; font-weight: bold; color: #059669;">
             <%= @semester_plan.sum { |s| s[:subjects].count } %>
           </div>
-          <div class="text-sm text-gray-600">Total Subjects</div>
+          <div style="font-size: 14px; color: #065f46; margin-top: 6px;">Total Subjects</div>
         </div>
-        <div class="text-center">
-          <div class="text-3xl font-bold text-green-600">
+        <div style="background-color: white; padding: 20px; border-radius: 6px; border: 1px solid #a7f3d0; text-align: center;">
+          <div style="font-size: 32px; font-weight: bold; color: #059669;">
             <%= @semester_plan.sum { |s| s[:subjects].sum { |subj| subj.credit_points || 0 } } %>
           </div>
-          <div class="text-sm text-gray-600">Total Credit Points</div>
+          <div style="font-size: 14px; color: #065f46; margin-top: 6px;">Total Credit Points</div>
         </div>
       </div>
     </div>

@@ -1,25 +1,25 @@
 <div class="w-full max-w-full mx-auto px-4 py-8">
-  <h1 class="text-4xl font-bold mb-4">Plan Your Degree</h1>
+  <h1 class="text-4xl font-bold" style="margin-top: 32px; margin-bottom: 40px;">Plan Your Degree</h1>
 
-  <div style="background-color: #e0e7ff; border-left: 4px solid #6366f1; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
-    <div style="display: flex; justify-content: space-between; align-items: start; gap: 24px;">
+  <div style="background-color: #e0e7ff; border-left: 6px solid #6366f1; padding: 28px; margin-bottom: 40px; border-radius: 8px;">
+    <div style="display: flex; justify-content: space-between; align-items: start; gap: 32px;">
       <div style="flex: 1;">
-        <p style="font-weight: bold; margin-bottom: 8px;">📚 <%= @course.name %> - Requirements</p>
+        <h2 style="font-weight: bold; margin-bottom: 20px; font-size: 20px; color: #3730a3;">📚 <%= @course.name %> - Requirements</h2>
         <% if @course.name.include?("Law") %>
-          <ul style="margin-left: 20px; margin-bottom: 0;">
-            <li><strong>Core units:</strong> All 20 units REQUIRED (240 CP)</li>
-            <li><strong>Advanced Law Electives:</strong> Choose 2 units (24 CP)</li>
-            <li><strong>QUT You units:</strong> Choose 4 units (24 CP)</li>
+          <ul style="margin-left: 20px; margin-bottom: 0; line-height: 1.8; font-size: 15px;">
+            <li style="margin-bottom: 8px;"><strong>Core units:</strong> All 20 units REQUIRED (240 CP)</li>
+            <li style="margin-bottom: 8px;"><strong>Advanced Law Electives:</strong> Choose 2 units (24 CP)</li>
+            <li style="margin-bottom: 8px;"><strong>QUT You units:</strong> Choose 4 units (24 CP)</li>
             <li><strong>Remaining:</strong> Select General Law Electives to reach 384 CP</li>
           </ul>
         <% elsif @course.name.include?("Information Technology") %>
-          <ul style="margin-left: 20px; margin-bottom: 0;">
-            <li><strong>Core units:</strong> 108 credit points REQUIRED</li>
-            <li><strong>Major:</strong> 72 credit points (Computer Science)</li>
-            <li><strong>QUT You:</strong> 24 credit points</li>
-            <li><strong>Complementary studies:</strong> 84 credit points
-              <ul style="margin-left: 20px; margin-top: 4px;">
-                <li>Second Major (72 CP) + elective (12 CP), OR</li>
+          <ul style="margin-left: 20px; margin-bottom: 0; line-height: 1.8; font-size: 15px;">
+            <li style="margin-bottom: 8px;"><strong>Core units:</strong> 108 credit points REQUIRED</li>
+            <li style="margin-bottom: 8px;"><strong>Major:</strong> 72 credit points (Computer Science)</li>
+            <li style="margin-bottom: 8px;"><strong>QUT You:</strong> 24 credit points</li>
+            <li style="margin-bottom: 8px;"><strong>Complementary studies:</strong> 84 credit points
+              <ul style="margin-left: 20px; margin-top: 6px;">
+                <li style="margin-bottom: 4px;">Second Major (72 CP) + elective (12 CP), OR</li>
                 <li>Minor (48 CP) + electives (36 CP)</li>
               </ul>
             </li>
@@ -28,9 +28,9 @@
         <% end %>
       </div>
 
-      <div style="background-color: white; padding: 16px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-width: 300px;">
-        <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px; font-weight: 600;">⚖️ Semester Difficulty</div>
-        <select name="difficulty" id="difficulty_select" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; margin-bottom: 8px;">
+      <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-width: 320px;">
+        <div style="font-size: 14px; color: #6b7280; margin-bottom: 12px; font-weight: 600;">⚖️ Semester Difficulty</div>
+        <select name="difficulty" id="difficulty_select" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; margin-bottom: 12px;">
           <option value="balanced">Balanced - Mix of all types</option>
           <option value="hard">Hard - Core units first</option>
           <option value="easy">Easy - Spread out core units</option>
@@ -39,16 +39,16 @@
           <div id="difficulty_description">Mix core, electives, and QUT You evenly</div>
         </div>
 
-        <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
-          <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px; font-weight: 600;">📅 Start Date</div>
-          <div style="display: flex; gap: 8px;">
-            <select name="start_year" style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+        <div style="border-top: 1px solid #e5e7eb; padding-top: 16px; margin-top: 16px;">
+          <div style="font-size: 14px; color: #6b7280; margin-bottom: 12px; font-weight: 600;">📅 Start Date</div>
+          <div style="display: flex; gap: 12px;">
+            <select name="start_year" style="flex: 1; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
               <% current_year = Time.current.year %>
               <% (current_year..(current_year + 5)).each do |year| %>
                 <option value="<%= year %>" <%= 'selected' if year == current_year %>><%= year %></option>
               <% end %>
             </select>
-            <select name="start_semester" style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+            <select name="start_semester" style="flex: 1; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
               <% current_semester = Time.current.month <= 6 ? "1" : "2" %>
               <option value="1" <%= 'selected' if current_semester == "1" %>>Sem 1</option>
               <option value="2" <%= 'selected' if current_semester == "2" %>>Sem 2</option>
@@ -57,7 +57,7 @@
         </div>
       </div>
 
-      <div style="text-align: right; background-color: white; padding: 16px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-width: 200px;">
+      <div style="text-align: right; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-width: 220px;">
         <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">Your Total</div>
         <div style="font-size: 32px; font-weight: bold; color: #7c3aed;" id="grand_total">
           <%= @course.name.include?("Information Technology") ? "108" : "240" %>
@@ -126,12 +126,12 @@
           "Optional"
         end
     %>
-      <div style="background-color: white; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; margin-bottom: 16px; overflow: hidden;">
-        <div style="background-color: #f9fafb; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; cursor: pointer;"
+      <div style="background-color: white; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; margin-bottom: 20px; overflow: hidden;">
+        <div style="background-color: #f9fafb; padding: 16px 20px; border-bottom: 1px solid #e5e7eb; cursor: pointer;"
              class="accordion-header"
              data-section="<%= unit_type.gsub(' ', '_') %>">
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="font-size: 18px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px;">
+            <h2 style="font-size: 19px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px;">
               <span class="accordion-icon" style="font-size: 14px; transition: transform 0.2s; color: #6b7280;">▼</span>
               <%= unit_type %>
               <span style="font-size: 13px; color: #6b7280; font-weight: normal;">
@@ -163,32 +163,32 @@
             </colgroup>
             <thead style="background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">
               <tr>
-                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Code</th>
-                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Unit Name</th>
-                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Prerequisites</th>
-                <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">CP</th>
-                <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Want to Complete</th>
-                <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Already Completed</th>
+                <th style="padding: 16px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Code</th>
+                <th style="padding: 16px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Unit Name</th>
+                <th style="padding: 16px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Prerequisites</th>
+                <th style="padding: 16px; text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">CP</th>
+                <th style="padding: 16px; text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Want to Complete</th>
+                <th style="padding: 16px; text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Already Completed</th>
               </tr>
             </thead>
             <tbody>
               <% subjects.each do |subject| %>
                 <tr style="border-bottom: 1px solid #e5e7eb;">
-                  <td style="padding: 12px;">
+                  <td style="padding: 16px;">
                     <span style="display: inline-block; padding: 4px 8px; background-color: #dbeafe; color: #1e40af; border-radius: 4px; font-family: monospace; font-size: 12px; font-weight: 600;">
                       <%= subject.code %>
                     </span>
                   </td>
-                  <td style="padding: 12px;">
+                  <td style="padding: 16px;">
                     <div style="font-weight: 500;"><%= subject.name %></div>
                   </td>
-                  <td style="padding: 12px; font-size: 12px; color: #6b7280;">
+                  <td style="padding: 16px; font-size: 12px; color: #6b7280;">
                     <%= subject.prerequisites.present? ? subject.prerequisites : "None" %>
                   </td>
-                  <td style="padding: 12px; text-align: center; font-weight: 500;">
+                  <td style="padding: 16px; text-align: center; font-weight: 500;">
                     <%= subject.credit_points %>
                   </td>
-                  <td style="padding: 12px; text-align: center;">
+                  <td style="padding: 16px; text-align: center;">
                     <% if unit_type == "Core" %>
                       <%= check_box_tag "want_to_complete_ids[]", subject.id, true,
                           style: "width: 20px; height: 20px; pointer-events: none; opacity: 0.6;",
@@ -207,7 +207,7 @@
                           } %>
                     <% end %>
                   </td>
-                  <td style="padding: 12px; text-align: center;">
+                  <td style="padding: 16px; text-align: center;">
                     <%= check_box_tag "completed_subject_ids[]", subject.id, false,
                         style: "width: 20px; height: 20px; cursor: pointer;",
                         class: "completed-checkbox" %>
@@ -220,11 +220,11 @@
       </div>
     <% end %>
 
-    <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center;">
-      <button type="button" id="randomize_button" onclick="randomizePlan()" style="background-color: #f59e0b !important; color: white !important; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #d97706; cursor: pointer;">
-        🎲 Randomize Plan
+    <div style="margin-top: 32px; display: flex; gap: 16px; align-items: center;">
+      <button type="button" id="randomise_button" onclick="randomisePlan()" style="background-color: #f59e0b !important; color: white !important; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #d97706; cursor: pointer;">
+        🎲 Randomise Plan
       </button>
-      <button type="submit" id="submit_button" style="background-color: #7c3aed !important; color: white !important; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #6d28d9; cursor: pointer;">
+      <button type="submit" id="submit_button" style="background-color: #7c3aed !important; color: white !important; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #6d28d9; cursor: pointer;">
         ✓ Generate My Degree Plan →
       </button>
     </div>
@@ -358,8 +358,8 @@
     });
   });
 
-  // Randomize plan function
-  function randomizePlan() {
+  // Randomise plan function
+  function randomisePlan() {
     const isLaw = courseName.includes("Law");
     const isIT = courseName.includes("Information Technology");
 

@@ -1,10 +1,10 @@
 <div class="w-full max-w-2xl mx-auto px-4 py-8">
-  <h1 class="text-4xl font-bold mb-8 text-center">Select Your Course</h1>
+  <h1 class="text-4xl font-bold text-center" style="margin-top: 32px; margin-bottom: 40px;">Select Your Course</h1>
 
   <%= form_with url: degree_planner_submit_course_selection_path, method: :post, data: { turbo: false } do |form| %>
-    <div style="background-color: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 32px;">
+    <div style="background-color: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 40px;">
       <% @courses.each do |course| %>
-        <div style="border: 2px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 16px; cursor: pointer; transition: all 0.2s;"
+        <div style="border: 2px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 20px; cursor: pointer; transition: all 0.2s;"
              onmouseover="this.style.borderColor='#7c3aed'; this.style.backgroundColor='#f5f3ff';"
              onmouseout="this.style.borderColor='#e5e7eb'; this.style.backgroundColor='white';"
              onclick="document.getElementById('course_<%= course.id %>').checked = true; this.querySelector('input').focus();">

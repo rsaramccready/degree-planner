@@ -1,50 +1,77 @@
-# Tanda Hackathon Starter Kit
+# QUT Degree Planner
 
 ## What is this?
-This is a starter kit for use at hackathons made by the team at Tanda. It comes with:
+A web application that helps QUT students plan their degree by automatically scheduling subjects based on prerequisites, credit point requirements, and semester availability. The planner intelligently handles complex prerequisite logic (OR/AND conditions) and generates an optimal semester-by-semester study plan.
 
-* Email/password authentication
-* Tailwind on the frontend
-* Simple API Authentication using JWTs if you are using an SPA frontend like Vue or React.
+### Features
+* Course selection (Law, Computer Science, Information Technology)
+* Subject selection with prerequisite validation
+* Automatic semester planning with topological sorting
+* GPA calculation for completed subjects
+* Support for complex prerequisites (OR/AND logic)
+* Difficulty modes (Easy, Balanced, Hard) for different study loads
+* Responsive UI with Tailwind CSS
+
+## Tech Stack
+* Ruby on Rails 8.1.1
+* Ruby 3.2.4+
+* SQLite (development) / PostgreSQL (production)
+* Tailwind CSS
+* Turbo & Stimulus
 
 # Getting Started
-To get started with the Hackathon Starter Kit - run the following commands.
+
+## Local Setup (Recommended)
+
+### Prerequisites
+You will need to install Ruby and SQLite. Follow the official Ruby on Rails guide: https://guides.rubyonrails.org/getting_started.html#creating-a-new-rails-project-installing-rails
+
+### Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd degree-planner
+
+# Install dependencies
+bundle install
+
+# Setup the database and seed with course data
+bin/rails db:prepare
+
+# Start the development server
+bin/rails server
+```
+
+Visit `http://localhost:3000` to access the application.
+
+### Development with Tailwind
+
+If you're making CSS changes, run the Tailwind watcher in a separate terminal:
+
+```bash
+bin/dev
+```
+
+This will watch for Tailwind CSS changes and recompile automatically.
 
 ## Using Docker
 
-Download and install Docker following this guide: https://docs.docker.com/get-started/get-docker/
+Download and install Docker: https://docs.docker.com/get-started/get-docker/
 
-Once you have downloaded docker run the following to set up the container
-
-NOTE: if you update any dependencies you will need to re-run `docker compose build`
+**NOTE**: If you update any dependencies, you'll need to re-run `docker compose build`
 
 ```bash
-# build the application docker image
+# Build the application docker image
 docker compose build
-
-# Verify the image built
-docker images | grep hackathon
 
 # Run the application
 docker compose up
-
-# Alternatively if you prefer to skip compose and use direct docker commands
-
-docker build -t hackathon .
-# Verify the image built
-docker images | grep hackathon
-
-# Run the application
-docker run --rm -it \
-  -p 3000:3000 \
-  -v .:/rails hackathon
-
-# In another terminal
-docker run --rm -it \
-  -v .:/rails hackathon tailwind
 ```
 
-Some other commands useful for local development with Docker via the compose plugin
+Visit `http://localhost:3000` to access the application.
+
+### Useful Docker Commands
 
 ```bash
 # Access the Rails console
@@ -53,113 +80,84 @@ docker compose run --rm hackathon console
 # Launch a shell in a new container
 docker compose run --rm hackathon bash
 
-# Launch a shell in the running container previously launched using `docker compose up`
+# Launch a shell in the running container
 docker compose exec hackathon bash
-
-# Alternatively if you prefer to skip compose and use direct docker commands
-
-# Access the Rails console
-docker run --rm -it -v .:/rails hackathon console
-
-# To access the Docker image CLI
-docker run -it --entrypoint /bin/bash hackathon
-
-# To access the currently running container CLI
-docker ps
-
-# From the command above find the running Container ID for hackathon
-docker exec -it <CONTAINER_ID> bash
 ```
 
-## Without Docker
+## Database Setup
 
-You will need to install `sqlite` and `ruby`. You can follow the official Ruby on Rails guide here: https://guides.rubyonrails.org/getting_started.html#creating-a-new-rails-project-installing-rails
+The seed file includes:
+- QUT Law, Computer Science, and Information Technology courses
+- All subjects with prerequisites, credit points, and semester availability
+- Sample user accounts
 
-
-### After system dependencies are installed
+If you need to reset the database:
 
 ```bash
-# This will install dependencies
-bundle install
-
-# This will setup the database & seed it
-bin/rails db:prepare
-
-# In one terminal run this - it will run a watcher for tailwind
-bin/dev
-
-# In another terminal run this - it will run the rails server
-bin/rails server
+bin/rails db:reset
 ```
 
-## After Setup
-Visit `localhost:3000` and login with either user found in `seeds.rb` or sign up with your own user.
+## How It Works
 
-# API
+### Prerequisite Parsing
+The application automatically parses complex prerequisite strings like:
+- Simple: `IFB104` (requires one subject)
+- OR logic: `IFB104 or EGB103` (requires any one)
+- AND logic: `IFB104 and IFB240` (requires both)
+- Complex: `(IFN582 and IFN584) or CAB301` (requires both from first group OR the single subject)
 
-You can add API endpoints in `app/controllers/api/v1`, and by adding the routes in `routes.rb` in the `api` namespace.
+### Planning Algorithm
+The planner uses a topological sort (Kahn's algorithm) combined with custom prerequisite checking to:
+1. Build a dependency graph of subjects
+2. Schedule subjects when prerequisites are met
+3. Track credit points for CP-based prerequisites
+4. Optimize scheduling based on difficulty preference
+5. Handle OR/AND prerequisite logic correctly
 
-## Usage
+## Running Tests
 
 ```bash
-# Create a jwt
-curl -X POST http://localhost:3000/api/v1/auth/login \n    -H "Content-Type: application/json" \n    -d '{"email": "your_email@mail.com", "password": "your_password"}'
-```
-
-Which will return the following payload:
-
-```json
-{
-  "token":"YOUR_JWT",
-  "user": {"id":1,"email":"your_email@mail.com","name":"Your Name"}
-}
-```
-
-Then to make another request, use the JWT returned in the `token` in the `Authorization` header:
-
-```bash
-curl -X GET http://localhost:3000/api/v1/users/1 \
-    -H "Authorization: Bearer YOUR_JWT"
-```
-
-Which will return
-
-```json
-{"id":1,"email":"your_email@mail.com","name":"Your name","created_at":"2024-07-16T05:08:48.108Z"}
-```
-
-```
-
-## Run the test suite
-
-### Using docker
-```bash
-# get a container shell first
-docker compose run --rm hackathon bash
-```
-
-```bash
-# Using Rake
-bundle exec rake test
-
-# Alternatively either of these work too
-bin/test
-
+# Run all tests
 bin/rails test
 
-# To run a specific suite
-bin/rails test test/controllers/users_controller_test.rb
+# Run a specific test file
+bin/rails test test/controllers/degree_planner_controller_test.rb
 
-# To run a test on a specific line
-bin/rails test test/controllers/users_controller_test.rb:6
+# Run a specific test
+bin/rails test test/controllers/degree_planner_controller_test.rb:6
 ```
 
 ## Debugging
 
-You can add `binding.pry` to any Ruby file or view to access the debugger. This will add a breakpoint in your terminal window to use for any debugging. If you have never used a Ruby debugger before, this article should help get you started: https://medium.com/@eddgr/the-absolute-beginners-guide-to-using-pry-in-ruby-b08681558fa6
+You can add `binding.pry` to any Ruby file to access the debugger. This will add a breakpoint in your terminal.
 
-If you are using docker to run the application you'll need to make sure docker attaches to the running container to open an interactive debugging shell.
+For more info on using Pry: https://medium.com/@eddgr/the-absolute-beginners-guide-to-using-pry-in-ruby-b08681558fa6
 
-After you've started the application using `docker compose up` you'll need to open a new shell in the same directory and run `docker attach $(docker compose ps -q hackathon)`.
+### Debugging with Docker
 
-From there you'll be attached to the application container and any active breakpoints will trigger in this attached shell env.
+If using Docker, you'll need to attach to the running container:
+
+```bash
+# Start the application
+docker compose up
+
+# In another terminal, attach to the container
+docker attach $(docker compose ps -q hackathon)
+```
+
+Any breakpoints will now trigger in this attached shell.
+
+## Deployment
+
+The application is configured for deployment on Render with PostgreSQL. See `config/database.yml` for production configuration.
+
+## Contributing
+
+When adding new subjects or courses:
+1. Update the seed file with course/subject data
+2. Ensure prerequisites follow the expected format
+3. Run the prerequisite parsing script if needed: `bin/rails runner tmp/parse_prerequisites.rb`
+
+## License
+
+This project was built using the Tanda Hackathon Starter Kit as a foundation.

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_22_062009) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_22_063440) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -48,11 +48,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_22_062009) do
 
   create_table "subjects", force: :cascade do |t|
     t.string "code"
+    t.text "concurrent_subjects"
     t.integer "course_id", null: false
     t.datetime "created_at", null: false
     t.integer "credit_points"
     t.text "description"
     t.string "name"
+    t.text "prerequisite_groups"
     t.text "prerequisites"
     t.string "semester_availability"
     t.string "unit_type"

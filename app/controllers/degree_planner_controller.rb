@@ -54,7 +54,7 @@ class DegreePlannerController < ApplicationController
     @grades = session[:grades] || {}
 
     # Get all subjects at once with eager loading to avoid N+1 queries
-    all_subjects = @course.subjects.select(:id, :code, :name, :credit_points, :unit_type, :prerequisites, :semester_availability, :course_id).to_a
+    all_subjects = @course.subjects.select(:id, :code, :name, :credit_points, :unit_type, :prerequisites, :semester_availability, :course_id, :prerequisite_groups, :concurrent_subjects).to_a
     completed_subjects = all_subjects.select { |s| @completed_subject_ids.include?(s.id.to_s) }
 
     # Only plan for subjects marked as "want to complete" that aren't already completed
@@ -96,13 +96,14 @@ class DegreePlannerController < ApplicationController
     # Calculate in-degree (number of prerequisites) for each subject
     in_degree = {}
     adjacency_list = {}
+    scheduled_codes = Set.new
 
     remaining_subjects.each do |subject|
       in_degree[subject.code] = 0
       adjacency_list[subject.code] = []
     end
 
-    # Build graph
+    # Build graph for ALL subjects (topological sort for ordering)
     remaining_subjects.each do |subject|
       prereq_codes = subject.prerequisite_codes.select { |code| subject_map.key?(code) }
       prereq_codes.each do |prereq_code|
@@ -115,17 +116,28 @@ class DegreePlannerController < ApplicationController
     # Calculate initial CP from completed subjects
     completed_cp = completed_subjects.sum(&:credit_points)
 
+    # Pre-filter subjects with CP requirements for optimization
+    subjects_with_cp_req = remaining_subjects.select { |s| s.required_cp > 0 }.index_by(&:code)
+
     queue = []
     remaining_subjects.each do |subject|
-      prereqs = subject.prerequisite_codes
       required_cp = subject.required_cp
-
-      # Check if all prerequisites are met
-      all_prereqs_met = prereqs.all? { |prereq| completed_codes.include?(prereq) || !subject_map.key?(prereq) }
       cp_requirement_met = completed_cp >= required_cp
 
-      if all_prereqs_met && cp_requirement_met
-        queue << subject.code
+      # For subjects with prerequisite_groups, check using prerequisites_met? (handles OR/AND)
+      # For subjects without prerequisite_groups, use topological sort (in_degree)
+      if subject.prerequisite_groups.present?
+        # Check OR/AND logic
+        all_prereqs_met = subject.prerequisites_met?(completed_codes | scheduled_codes)
+        if all_prereqs_met && cp_requirement_met
+          queue << subject.code
+        end
+      else
+        # Use topological sort
+        all_prereqs_met = subject.prerequisites_met?(completed_codes | scheduled_codes)
+        if all_prereqs_met && cp_requirement_met && in_degree[subject.code] == 0
+          queue << subject.code
+        end
       end
     end
 
@@ -134,8 +146,9 @@ class DegreePlannerController < ApplicationController
     current_semester = start_semester
     semester_capacity = 4 # 4 subjects per semester
     cumulative_cp = completed_cp # Track CP as we schedule
+    max_semesters = 20 # Safety limit to prevent infinite loops
 
-    while queue.any?
+    while queue.any? && semester_plan.length < max_semesters
       # Select subjects for this semester based on difficulty
       available_subjects = queue.map { |code| subject_map[code] }
       semester_subjects = []
@@ -151,30 +164,48 @@ class DegreePlannerController < ApplicationController
         selected.each do |subject|
           queue.delete(subject.code)
           semester_subjects << subject
+          scheduled_codes.add(subject.code)
           cumulative_cp += subject.credit_points
 
           # Update in-degree for dependent subjects
           adjacency_list[subject.code].each do |dependent_code|
             in_degree[dependent_code] -= 1
-            if in_degree[dependent_code] == 0
+            if in_degree[dependent_code] == 0 && !scheduled_codes.include?(dependent_code)
               queue << dependent_code unless queue.include?(dependent_code)
             end
           end
         end
 
-        # Check if any subjects now meet CP requirements after this semester
+        # Check ONLY subjects with CP requirements that now meet the threshold
+        subjects_with_cp_req.each do |code, subject|
+          next if queue.include?(code) || scheduled_codes.include?(code)
+          next if cumulative_cp < subject.required_cp
+
+          # Use new prerequisite checking with OR/AND logic - include both completed AND scheduled
+          all_prereqs_met = subject.prerequisites_met?(completed_codes | scheduled_codes)
+
+          if subject.prerequisite_groups.present?
+            # For subjects with OR/AND logic, just check prerequisites_met?
+            queue << code if all_prereqs_met
+          else
+            # For simple prerequisites, also check topological sort
+            queue << code if all_prereqs_met && in_degree[code] == 0
+          end
+        end
+
+        # Check ALL remaining subjects to see if they can now be scheduled
         remaining_subjects.each do |subject|
-          next if queue.include?(subject.code)
-          next if semester_subjects.include?(subject)
+          next if queue.include?(subject.code) || scheduled_codes.include?(subject.code)
+          next if cumulative_cp < subject.required_cp
 
-          prereqs = subject.prerequisite_codes
-          required_cp = subject.required_cp
+          all_prereqs_met = subject.prerequisites_met?(completed_codes | scheduled_codes)
 
-          all_prereqs_met = prereqs.all? { |prereq| completed_codes.include?(prereq) || !subject_map.key?(prereq) }
-          cp_requirement_met = cumulative_cp >= required_cp
-
-          if all_prereqs_met && cp_requirement_met && in_degree[subject.code] == 0
-            queue << subject.code unless queue.include?(subject.code)
+          if subject.prerequisite_groups.present?
+            # For subjects with OR/AND logic, just check prerequisites_met?
+            queue << subject.code if all_prereqs_met
+          else
+            # For simple prerequisites, also check topological sort
+            queue << subject.code if all_prereqs_met && in_degree[subject.code] == 0
           end
         end
 
@@ -194,30 +225,48 @@ class DegreePlannerController < ApplicationController
         selected.each do |subject|
           queue.delete(subject.code)
           semester_subjects << subject
+          scheduled_codes.add(subject.code)
           cumulative_cp += subject.credit_points
 
           # Update in-degree for dependent subjects
           adjacency_list[subject.code].each do |dependent_code|
             in_degree[dependent_code] -= 1
-            if in_degree[dependent_code] == 0
+            if in_degree[dependent_code] == 0 && !scheduled_codes.include?(dependent_code)
               queue << dependent_code unless queue.include?(dependent_code)
             end
           end
         end
 
-        # Check if any subjects now meet CP requirements after this semester
+        # Check ONLY subjects with CP requirements that now meet the threshold
+        subjects_with_cp_req.each do |code, subject|
+          next if queue.include?(code) || scheduled_codes.include?(code)
+          next if cumulative_cp < subject.required_cp
+
+          # Use new prerequisite checking with OR/AND logic - include both completed AND scheduled
+          all_prereqs_met = subject.prerequisites_met?(completed_codes | scheduled_codes)
+
+          if subject.prerequisite_groups.present?
+            # For subjects with OR/AND logic, just check prerequisites_met?
+            queue << code if all_prereqs_met
+          else
+            # For simple prerequisites, also check topological sort
+            queue << code if all_prereqs_met && in_degree[code] == 0
+          end
+        end
+
+        # Check ALL remaining subjects to see if they can now be scheduled
         remaining_subjects.each do |subject|
-          next if queue.include?(subject.code)
-          next if semester_subjects.include?(subject)
+          next if queue.include?(subject.code) || scheduled_codes.include?(subject.code)
+          next if cumulative_cp < subject.required_cp
 
-          prereqs = subject.prerequisite_codes
-          required_cp = subject.required_cp
+          all_prereqs_met = subject.prerequisites_met?(completed_codes | scheduled_codes)
 
-          all_prereqs_met = prereqs.all? { |prereq| completed_codes.include?(prereq) || !subject_map.key?(prereq) }
-          cp_requirement_met = cumulative_cp >= required_cp
-
-          if all_prereqs_met && cp_requirement_met && in_degree[subject.code] == 0
-            queue << subject.code unless queue.include?(subject.code)
+          if subject.prerequisite_groups.present?
+            # For subjects with OR/AND logic, just check prerequisites_met?
+            queue << subject.code if all_prereqs_met
+          else
+            # For simple prerequisites, also check topological sort
+            queue << subject.code if all_prereqs_met && in_degree[subject.code] == 0
           end
         end
 
@@ -240,30 +289,48 @@ class DegreePlannerController < ApplicationController
         selected.each do |subject|
           queue.delete(subject.code)
           semester_subjects << subject
+          scheduled_codes.add(subject.code)
           cumulative_cp += subject.credit_points
 
           # Update in-degree for dependent subjects
           adjacency_list[subject.code].each do |dependent_code|
             in_degree[dependent_code] -= 1
-            if in_degree[dependent_code] == 0
+            if in_degree[dependent_code] == 0 && !scheduled_codes.include?(dependent_code)
               queue << dependent_code unless queue.include?(dependent_code)
             end
           end
         end
 
-        # Check if any subjects now meet CP requirements after this semester
+        # Check ONLY subjects with CP requirements that now meet the threshold
+        subjects_with_cp_req.each do |code, subject|
+          next if queue.include?(code) || scheduled_codes.include?(code)
+          next if cumulative_cp < subject.required_cp
+
+          # Use new prerequisite checking with OR/AND logic - include both completed AND scheduled
+          all_prereqs_met = subject.prerequisites_met?(completed_codes | scheduled_codes)
+
+          if subject.prerequisite_groups.present?
+            # For subjects with OR/AND logic, just check prerequisites_met?
+            queue << code if all_prereqs_met
+          else
+            # For simple prerequisites, also check topological sort
+            queue << code if all_prereqs_met && in_degree[code] == 0
+          end
+        end
+
+        # Check ALL remaining subjects to see if they can now be scheduled
         remaining_subjects.each do |subject|
-          next if queue.include?(subject.code)
-          next if semester_subjects.include?(subject)
+          next if queue.include?(subject.code) || scheduled_codes.include?(subject.code)
+          next if cumulative_cp < subject.required_cp
 
-          prereqs = subject.prerequisite_codes
-          required_cp = subject.required_cp
+          all_prereqs_met = subject.prerequisites_met?(completed_codes | scheduled_codes)
 
-          all_prereqs_met = prereqs.all? { |prereq| completed_codes.include?(prereq) || !subject_map.key?(prereq) }
-          cp_requirement_met = cumulative_cp >= required_cp
-
-          if all_prereqs_met && cp_requirement_met && in_degree[subject.code] == 0
-            queue << subject.code unless queue.include?(subject.code)
+          if subject.prerequisite_groups.present?
+            # For subjects with OR/AND logic, just check prerequisites_met?
+            queue << subject.code if all_prereqs_met
+          else
+            # For simple prerequisites, also check topological sort
+            queue << subject.code if all_prereqs_met && in_degree[subject.code] == 0
           end
         end
       end
