@@ -6,7 +6,6 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
-
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
@@ -25,9 +24,10 @@
     <% if current_user.present? %>
       <nav class="bg-gray-800 text-white p-4">
         <div class="container mx-auto flex justify-between">
-          <a href="<%= root_path %>" class="font-bold">Your Hackathon App</a>
+          <a href="<%= root_path %>" class="font-bold">Degree Planner</a>
             <div class="flex space-x-4">
-              <%= link_to "Logout", session_path,  data: {turbo_method: :delete} %>
+              <%= link_to "Plan My Degree", degree_planner_select_course_path, class: "hover:text-gray-300" %>
+              <%= link_to "Logout", session_path,  data: {turbo_method: :delete}, class: "hover:text-gray-300" %>
             </div>
           </div>
         </div>

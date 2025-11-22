@@ -1,0 +1,384 @@
+<div class="w-full max-w-full mx-auto px-4 py-8">
+  <h1 class="text-4xl font-bold mb-4">Plan Your Degree</h1>
+
+  <div style="background-color: #e0e7ff; border-left: 4px solid #6366f1; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
+    <div style="display: flex; justify-content: space-between; align-items: start; gap: 24px;">
+      <div style="flex: 1;">
+        <p style="font-weight: bold; margin-bottom: 8px;">📚 <%= @course.name %> - Requirements</p>
+        <% if @course.name.include?("Law") %>
+          <ul style="margin-left: 20px; margin-bottom: 0;">
+            <li><strong>Core units:</strong> All 20 units REQUIRED (240 CP)</li>
+            <li><strong>Advanced Law Electives:</strong> Choose 2 units (24 CP)</li>
+            <li><strong>QUT You units:</strong> Choose 4 units (24 CP)</li>
+            <li><strong>Remaining:</strong> Select General Law Electives to reach 384 CP</li>
+          </ul>
+        <% elsif @course.name.include?("Information Technology") %>
+          <ul style="margin-left: 20px; margin-bottom: 0;">
+            <li><strong>Core units:</strong> 108 credit points REQUIRED</li>
+            <li><strong>Major:</strong> 72 credit points (Computer Science)</li>
+            <li><strong>QUT You:</strong> 24 credit points</li>
+            <li><strong>Complementary studies:</strong> 84 credit points
+              <ul style="margin-left: 20px; margin-top: 4px;">
+                <li>Second Major (72 CP) + elective (12 CP), OR</li>
+                <li>Minor (48 CP) + electives (36 CP)</li>
+              </ul>
+            </li>
+            <li><strong>Total:</strong> 288 credit points</li>
+          </ul>
+        <% end %>
+      </div>
+
+      <div style="background-color: white; padding: 16px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-width: 300px;">
+        <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px; font-weight: 600;">⚖️ Semester Difficulty</div>
+        <select name="difficulty" id="difficulty_select" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; margin-bottom: 8px;">
+          <option value="balanced">Balanced - Mix of all types</option>
+          <option value="hard">Hard - Core units first</option>
+          <option value="easy">Easy - Spread out core units</option>
+        </select>
+        <div style="font-size: 12px; color: #6b7280; line-height: 1.4; margin-bottom: 12px;">
+          <div id="difficulty_description">Mix core, electives, and QUT You evenly</div>
+        </div>
+
+        <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
+          <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px; font-weight: 600;">📅 Start Date</div>
+          <div style="display: flex; gap: 8px;">
+            <select name="start_year" style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+              <% current_year = Time.current.year %>
+              <% (current_year..(current_year + 5)).each do |year| %>
+                <option value="<%= year %>" <%= 'selected' if year == current_year %>><%= year %></option>
+              <% end %>
+            </select>
+            <select name="start_semester" style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+              <% current_semester = Time.current.month <= 6 ? "1" : "2" %>
+              <option value="1" <%= 'selected' if current_semester == "1" %>>Sem 1</option>
+              <option value="2" <%= 'selected' if current_semester == "2" %>>Sem 2</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: right; background-color: white; padding: 16px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-width: 200px;">
+        <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">Your Total</div>
+        <div style="font-size: 32px; font-weight: bold; color: #7c3aed;" id="grand_total">
+          <%= @course.name.include?("Information Technology") ? "108" : "240" %>
+        </div>
+        <div style="font-size: 14px; color: #6b7280;">
+          / <%= @course.name.include?("Information Technology") ? "288" : "384" %> CP
+        </div>
+        <div id="remaining_message" style="font-size: 14px; margin-top: 8px; font-weight: 600;">
+          Need <%= @course.name.include?("Information Technology") ? "180" : "144" %> more CP
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%= form_with url: degree_planner_submit_step1_path, method: :post, data: { turbo: false }, id: "degree_plan_form" do |form| %>
+    <%
+      # Get all unique unit types from the course subjects
+      all_unit_types = @subjects.map(&:unit_type).uniq.compact.sort
+
+      # Define display order preference (put Core first, QUT You near end)
+      type_order = ["Core", "CS Major Core", "CS Major General Option", "CS Major Advanced Option",
+                    "Computer Science Elective", "Information Systems", "Advanced Law Elective",
+                    "General Law Elective", "Law Tech & Innovation Minor",
+                    "Science Elective", "Mathematics Elective", "Work Integrated Learning", "QUT You"]
+
+      # Sort unit types by preferred order
+      sorted_unit_types = all_unit_types.sort_by { |t| type_order.index(t) || 999 }
+
+      sorted_unit_types.each do |unit_type|
+        subjects = @subjects.select { |s| s.unit_type == unit_type }
+        next if subjects.empty?
+
+        # Define requirements based on course and unit type
+        is_law = @course.name.include?("Law")
+        is_it = @course.name.include?("Information Technology")
+
+        # Calculate actual CP total for this unit type
+        unit_type_cp_total = subjects.sum(&:credit_points)
+
+        requirement_text = case unit_type
+        when "Core"
+          if is_law
+            "All 20 units REQUIRED (#{unit_type_cp_total} CP)"
+          elsif is_it
+            "All units REQUIRED (#{unit_type_cp_total} CP)"
+          else
+            "Required"
+          end
+        when "Advanced Law Elective"
+          "Choose 2 units (24 CP)"
+        when "QUT You"
+          if is_law
+            "Choose 4 units (24 CP)"
+          else
+            "Choose units for 24 CP"
+          end
+        when "General Law Elective"
+          "Fill to reach 384 CP total"
+        when "CS Major Core", "CS Major General Option", "CS Major Advanced Option"
+          "Part of Major (72 CP total)"
+        when "Computer Science Elective", "Information Systems", "Science Elective", "Mathematics Elective"
+          "Complementary studies (84 CP total)"
+        when "Work Integrated Learning"
+          "Optional"
+        else
+          "Optional"
+        end
+    %>
+      <div style="background-color: white; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; margin-bottom: 16px; overflow: hidden;">
+        <div style="background-color: #f9fafb; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; cursor: pointer;"
+             class="accordion-header"
+             data-section="<%= unit_type.gsub(' ', '_') %>">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 18px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <span class="accordion-icon" style="font-size: 14px; transition: transform 0.2s; color: #6b7280;">▼</span>
+              <%= unit_type %>
+              <span style="font-size: 13px; color: #6b7280; font-weight: normal;">
+                (<%= subjects.count %> units available)
+              </span>
+            </h2>
+            <div style="text-align: right;">
+              <div style="font-size: 13px; color: #6b7280; margin-bottom: 2px;">
+                <%= requirement_text %>
+              </div>
+              <div style="font-size: 14px; color: #6b7280;">
+                <span class="<%= unit_type.gsub(' ', '_') %>_total" style="font-weight: 600; font-size: 16px; color: #7c3aed;">
+                  <%= unit_type == "Core" ? subjects.sum(&:credit_points) : 0 %>
+                </span> CP selected
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-content" data-section="<%= unit_type.gsub(' ', '_') %>" style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+            <colgroup>
+              <col style="width: 100px;">
+              <col style="width: auto;">
+              <col style="width: 200px;">
+              <col style="width: 60px;">
+              <col style="width: 140px;">
+              <col style="width: 140px;">
+            </colgroup>
+            <thead style="background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+              <tr>
+                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Code</th>
+                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Unit Name</th>
+                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Prerequisites</th>
+                <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">CP</th>
+                <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Want to Complete</th>
+                <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase;">Already Completed</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% subjects.each do |subject| %>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 12px;">
+                    <span style="display: inline-block; padding: 4px 8px; background-color: #dbeafe; color: #1e40af; border-radius: 4px; font-family: monospace; font-size: 12px; font-weight: 600;">
+                      <%= subject.code %>
+                    </span>
+                  </td>
+                  <td style="padding: 12px;">
+                    <div style="font-weight: 500;"><%= subject.name %></div>
+                  </td>
+                  <td style="padding: 12px; font-size: 12px; color: #6b7280;">
+                    <%= subject.prerequisites.present? ? subject.prerequisites : "None" %>
+                  </td>
+                  <td style="padding: 12px; text-align: center; font-weight: 500;">
+                    <%= subject.credit_points %>
+                  </td>
+                  <td style="padding: 12px; text-align: center;">
+                    <% if unit_type == "Core" %>
+                      <%= check_box_tag "want_to_complete_ids[]", subject.id, true,
+                          style: "width: 20px; height: 20px; pointer-events: none; opacity: 0.6;",
+                          class: "want-checkbox",
+                          data: {
+                            unit_type: unit_type.gsub(' ', '_'),
+                            credit_points: subject.credit_points
+                          } %>
+                    <% else %>
+                      <%= check_box_tag "want_to_complete_ids[]", subject.id, false,
+                          style: "width: 20px; height: 20px; cursor: pointer;",
+                          class: "want-checkbox",
+                          data: {
+                            unit_type: unit_type.gsub(' ', '_'),
+                            credit_points: subject.credit_points
+                          } %>
+                    <% end %>
+                  </td>
+                  <td style="padding: 12px; text-align: center;">
+                    <%= check_box_tag "completed_subject_ids[]", subject.id, false,
+                        style: "width: 20px; height: 20px; cursor: pointer;",
+                        class: "completed-checkbox" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% end %>
+
+    <div style="margin-top: 24px;">
+      <div id="error_message" style="display: none; background-color: #fee2e2; border: 1px solid #dc2626; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-weight: 600;">
+        ⚠️ You have selected too many credit points. Please reduce your selection to continue.
+      </div>
+      <button type="submit" id="submit_button" style="background-color: #7c3aed !important; color: white !important; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #6d28d9; cursor: pointer;">
+        ✓ Generate My Degree Plan →
+      </button>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  // Get the required total CP based on course
+  const courseName = "<%= @course.name %>";
+  const requiredCP = courseName.includes("Information Technology") ? 288 : 384;
+
+  function updateTotals() {
+    const totals = {};
+    let grandTotal = 0;
+
+    // Count all checked "want to complete" checkboxes
+    document.querySelectorAll('.want-checkbox:checked').forEach(checkbox => {
+      const unitType = checkbox.dataset.unitType;
+      const creditPoints = parseInt(checkbox.dataset.creditPoints);
+
+      if (!totals[unitType]) {
+        totals[unitType] = 0;
+      }
+      totals[unitType] += creditPoints;
+      grandTotal += creditPoints;
+    });
+
+    // Update section totals
+    Object.keys(totals).forEach(unitType => {
+      const element = document.querySelector(`.${unitType}_total`);
+      if (element) {
+        element.textContent = totals[unitType];
+      }
+    });
+
+    // Update grand total
+    const grandTotalElement = document.getElementById('grand_total');
+    const remainingMessageElement = document.getElementById('remaining_message');
+    const submitButton = document.getElementById('submit_button');
+    const errorMessage = document.getElementById('error_message');
+
+    if (grandTotalElement) {
+      grandTotalElement.textContent = grandTotal;
+
+      const remaining = requiredCP - grandTotal;
+      if (remaining > 0) {
+        grandTotalElement.style.color = '#7c3aed'; // Purple
+        remainingMessageElement.textContent = `Need ${remaining} more CP`;
+        remainingMessageElement.style.color = '#dc2626'; // Red
+        submitButton.disabled = false;
+        submitButton.style.opacity = '1';
+        submitButton.style.cursor = 'pointer';
+        errorMessage.style.display = 'none';
+      } else if (remaining < 0) {
+        grandTotalElement.style.color = '#ea580c'; // Orange
+        remainingMessageElement.textContent = `${Math.abs(remaining)} CP over`;
+        remainingMessageElement.style.color = '#ea580c'; // Orange
+        submitButton.disabled = true;
+        submitButton.style.opacity = '0.5';
+        submitButton.style.cursor = 'not-allowed';
+        errorMessage.style.display = 'block';
+      } else {
+        grandTotalElement.style.color = '#16a34a'; // Green
+        remainingMessageElement.textContent = '✓ Complete!';
+        remainingMessageElement.style.color = '#16a34a'; // Green
+        submitButton.disabled = false;
+        submitButton.style.opacity = '1';
+        submitButton.style.cursor = 'pointer';
+        errorMessage.style.display = 'none';
+      }
+    }
+
+    // Update General Law Elective label (only for Law course)
+    const generalLawElement = document.querySelector('.General_Law_Elective_total');
+    if (generalLawElement) {
+      const generalLawLabel = generalLawElement.parentElement;
+      const remaining = requiredCP - grandTotal;
+      if (remaining > 0) {
+        const unitsNeeded = Math.ceil(remaining / 12);
+        generalLawLabel.innerHTML = `<span class="General_Law_Elective_total" style="font-weight: bold; font-size: 18px; color: #7c3aed;">${totals['General_Law_Elective'] || 0}</span> / Need ${remaining} more CP (≈${unitsNeeded} units)`;
+      } else {
+        generalLawLabel.innerHTML = `<span class="General_Law_Elective_total" style="font-weight: bold; font-size: 18px; color: #7c3aed;">${totals['General_Law_Elective'] || 0}</span> / Optional (requirement met)`;
+      }
+    }
+  }
+
+  // Update on page load
+  document.addEventListener('DOMContentLoaded', updateTotals);
+
+  // Update when checkboxes change
+  document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('want-checkbox')) {
+      updateTotals();
+    }
+  });
+
+  // Update difficulty description
+  const difficultySelect = document.getElementById('difficulty_select');
+  const difficultyDescription = document.getElementById('difficulty_description');
+
+  const descriptions = {
+    balanced: 'Mix core, electives, and QUT You evenly',
+    hard: 'Schedule all core units first, then electives',
+    easy: 'Spread core units thin, buffer with QUT You'
+  };
+
+  if (difficultySelect && difficultyDescription) {
+    difficultySelect.addEventListener('change', () => {
+      difficultyDescription.textContent = descriptions[difficultySelect.value];
+    });
+  }
+
+  // Accordion functionality
+  document.querySelectorAll('.accordion-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const section = header.dataset.section;
+      const content = document.querySelector(`.accordion-content[data-section="${section}"]`);
+      const icon = header.querySelector('.accordion-icon');
+
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.style.transform = 'rotate(0deg)';
+        icon.textContent = '▼';
+      } else {
+        content.style.display = 'none';
+        icon.style.transform = 'rotate(-90deg)';
+        icon.textContent = '▶';
+      }
+    });
+  });
+
+  // Collapse all sections except Core by default on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.accordion-content').forEach(content => {
+      const section = content.dataset.section;
+      const header = document.querySelector(`.accordion-header[data-section="${section}"]`);
+      const icon = header.querySelector('.accordion-icon');
+
+      // Keep Core expanded, collapse others
+      if (section !== 'Core') {
+        content.style.display = 'none';
+        icon.style.transform = 'rotate(-90deg)';
+        icon.textContent = '▶';
+      }
+    });
+  });
+
+  // Prevent form submission if too many CP selected
+  document.getElementById('degree_plan_form').addEventListener('submit', (e) => {
+    const submitButton = document.getElementById('submit_button');
+    if (submitButton.disabled) {
+      e.preventDefault();
+      alert('You have selected too many credit points. Please reduce your selection.');
+      return false;
+    }
+  });
+</script>

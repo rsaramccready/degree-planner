@@ -1,0 +1,37 @@
+<div class="w-full max-w-2xl mx-auto px-4 py-8">
+  <h1 class="text-4xl font-bold mb-8 text-center">Select Your Course</h1>
+
+  <%= form_with url: degree_planner_submit_course_selection_path, method: :post, data: { turbo: false } do |form| %>
+    <div style="background-color: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 32px;">
+      <% @courses.each do |course| %>
+        <div style="border: 2px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 16px; cursor: pointer; transition: all 0.2s;"
+             onmouseover="this.style.borderColor='#7c3aed'; this.style.backgroundColor='#f5f3ff';"
+             onmouseout="this.style.borderColor='#e5e7eb'; this.style.backgroundColor='white';"
+             onclick="document.getElementById('course_<%= course.id %>').checked = true; this.querySelector('input').focus();">
+          <label style="display: flex; align-items: start; cursor: pointer; gap: 16px;">
+            <%= form.radio_button :course_id, course.id, required: true, style: "width: 20px; height: 20px; margin-top: 4px; cursor: pointer;", id: "course_#{course.id}" %>
+            <div style="flex: 1;">
+              <div style="font-size: 20px; font-weight: bold; color: #1f2937; margin-bottom: 8px;">
+                <%= course.name %>
+              </div>
+              <% if course.description.present? %>
+                <div style="font-size: 14px; color: #6b7280; line-height: 1.5;">
+                  <%= course.description %>
+                </div>
+              <% end %>
+              <div style="font-size: 14px; color: #7c3aed; margin-top: 8px; font-weight: 600;">
+                <%= course.subjects.count %> units available
+              </div>
+            </div>
+          </label>
+        </div>
+      <% end %>
+
+      <div style="margin-top: 32px; text-align: center;">
+        <button type="submit" style="background-color: #7c3aed !important; color: white !important; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #6d28d9; cursor: pointer;">
+          Continue to Unit Selection →
+        </button>
+      </div>
+    </div>
+  <% end %>
+</div>

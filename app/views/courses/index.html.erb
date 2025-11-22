@@ -1,0 +1,46 @@
+<div class="w-full">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Courses</h1>
+    <%= link_to "Add New Course", new_course_path, class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+  </div>
+
+  <% if @courses.any? %>
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+      <table class="min-w-full">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subjects</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% @courses.each do |course| %>
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <%= link_to course.name, course_path(course), class: "text-blue-600 hover:text-blue-900" %>
+              </td>
+              <td class="px-6 py-4">
+                <%= course.description&.truncate(100) %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-gray-700"><%= course.subjects.count %> units</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <%= link_to "View", course_path(course), class: "text-blue-600 hover:text-blue-900 mr-3" %>
+                <%= link_to "Edit", edit_course_path(course), class: "text-yellow-600 hover:text-yellow-900 mr-3" %>
+                <%= link_to "Delete", course_path(course), data: { turbo_method: :delete, turbo_confirm: "Are you sure?" }, class: "text-red-600 hover:text-red-900" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="bg-gray-100 border border-gray-300 rounded-lg p-8 text-center">
+      <p class="text-gray-600 text-lg mb-4">No courses yet. Add your first course to get started!</p>
+      <%= link_to "Add First Course", new_course_path, class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+    </div>
+  <% end %>
+</div>

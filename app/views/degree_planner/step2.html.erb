@@ -1,0 +1,47 @@
+<div class="w-full max-w-3xl mx-auto px-4 py-8">
+  <h1 class="text-4xl font-bold mb-4">Step 2: Select Starting Semester</h1>
+
+  <p class="text-gray-600 mb-6">
+    When do you want to start your remaining subjects?
+  </p>
+
+  <% if @completed_subject_ids.any? %>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+      <p class="font-semibold text-blue-900">
+        ✓ You've completed <%= @completed_subject_ids.count %> subjects
+      </p>
+    </div>
+  <% end %>
+
+  <%= form_with url: degree_planner_submit_step2_path, method: :post, class: "mt-6", data: { turbo: false } do |form| %>
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+      <div class="mb-6">
+        <h3 class="text-xl font-semibold mb-3">Starting Year</h3>
+        <%= select_tag :start_year,
+            options_for_select((2025..2035).to_a, 2025),
+            class: "block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" %>
+      </div>
+
+      <div class="mb-6">
+        <h3 class="text-xl font-semibold mb-3">Starting Semester</h3>
+        <div class="space-y-3">
+          <label class="flex items-center space-x-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
+            <%= radio_button_tag :start_semester, "1", true, class: "h-4 w-4 text-blue-600" %>
+            <span class="font-medium">Semester 1</span>
+          </label>
+          <label class="flex items-center space-x-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
+            <%= radio_button_tag :start_semester, "2", false, class: "h-4 w-4 text-blue-600" %>
+            <span class="font-medium">Semester 2</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-4">
+      <%= button_tag type: :submit, class: "bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg" do %>
+        Generate My Degree Plan →
+      <% end %>
+      <%= link_to "← Back", degree_planner_step1_path, class: "bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg text-lg" %>
+    </div>
+  <% end %>
+</div>

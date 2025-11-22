@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  course: one
+  code: MyString
+  name: MyString
+  description: MyText
+  credit_points: 1
+  prerequisites: MyText
+
+two:
+  course: two
+  code: MyString
+  name: MyString
+  description: MyText
+  credit_points: 1
+  prerequisites: MyText

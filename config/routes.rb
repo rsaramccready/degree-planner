@@ -1,4 +1,16 @@
 Rails.application.routes.draw do
+  # Degree Planner routes
+  get "degree_planner/select_course"
+  post "degree_planner/submit_course_selection", to: "degree_planner#submit_course_selection"
+  get "degree_planner/step1"
+  post "degree_planner/submit_step1", to: "degree_planner#submit_step1"
+  get "degree_planner/step2"
+  post "degree_planner/submit_step2", to: "degree_planner#submit_step2"
+  get "degree_planner/plan"
+
+  # Course routes
+  resources :courses
+
   # Defines the root path route ("/")
   root "sessions#new"
 
