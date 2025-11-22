@@ -111,12 +111,19 @@ class DegreePlannerController < ApplicationController
     end
 
     # Topological sort using Kahn's algorithm
+    # Calculate initial CP from completed subjects
+    completed_cp = completed_subjects.sum(&:credit_points)
+
     queue = []
     remaining_subjects.each do |subject|
       prereqs = subject.prerequisite_codes
-      # Check if all prerequisites are either completed or not in remaining subjects
+      required_cp = subject.required_cp
+
+      # Check if all prerequisites are met
       all_prereqs_met = prereqs.all? { |prereq| completed_codes.include?(prereq) || !subject_map.key?(prereq) }
-      if all_prereqs_met
+      cp_requirement_met = completed_cp >= required_cp
+
+      if all_prereqs_met && cp_requirement_met
         queue << subject.code
       end
     end
@@ -125,6 +132,7 @@ class DegreePlannerController < ApplicationController
     current_year = start_year
     current_semester = start_semester
     semester_capacity = 4 # 4 subjects per semester
+    cumulative_cp = completed_cp # Track CP as we schedule
 
     while queue.any?
       # Select subjects for this semester based on difficulty
@@ -142,6 +150,7 @@ class DegreePlannerController < ApplicationController
         selected.each do |subject|
           queue.delete(subject.code)
           semester_subjects << subject
+          cumulative_cp += subject.credit_points
 
           # Update in-degree for dependent subjects
           adjacency_list[subject.code].each do |dependent_code|
@@ -149,6 +158,22 @@ class DegreePlannerController < ApplicationController
             if in_degree[dependent_code] == 0
               queue << dependent_code unless queue.include?(dependent_code)
             end
+          end
+        end
+
+        # Check if any subjects now meet CP requirements after this semester
+        remaining_subjects.each do |subject|
+          next if queue.include?(subject.code)
+          next if semester_subjects.include?(subject)
+
+          prereqs = subject.prerequisite_codes
+          required_cp = subject.required_cp
+
+          all_prereqs_met = prereqs.all? { |prereq| completed_codes.include?(prereq) || !subject_map.key?(prereq) }
+          cp_requirement_met = cumulative_cp >= required_cp
+
+          if all_prereqs_met && cp_requirement_met && in_degree[subject.code] == 0
+            queue << subject.code unless queue.include?(subject.code)
           end
         end
 
@@ -168,6 +193,7 @@ class DegreePlannerController < ApplicationController
         selected.each do |subject|
           queue.delete(subject.code)
           semester_subjects << subject
+          cumulative_cp += subject.credit_points
 
           # Update in-degree for dependent subjects
           adjacency_list[subject.code].each do |dependent_code|
@@ -175,6 +201,22 @@ class DegreePlannerController < ApplicationController
             if in_degree[dependent_code] == 0
               queue << dependent_code unless queue.include?(dependent_code)
             end
+          end
+        end
+
+        # Check if any subjects now meet CP requirements after this semester
+        remaining_subjects.each do |subject|
+          next if queue.include?(subject.code)
+          next if semester_subjects.include?(subject)
+
+          prereqs = subject.prerequisite_codes
+          required_cp = subject.required_cp
+
+          all_prereqs_met = prereqs.all? { |prereq| completed_codes.include?(prereq) || !subject_map.key?(prereq) }
+          cp_requirement_met = cumulative_cp >= required_cp
+
+          if all_prereqs_met && cp_requirement_met && in_degree[subject.code] == 0
+            queue << subject.code unless queue.include?(subject.code)
           end
         end
 
@@ -197,6 +239,7 @@ class DegreePlannerController < ApplicationController
         selected.each do |subject|
           queue.delete(subject.code)
           semester_subjects << subject
+          cumulative_cp += subject.credit_points
 
           # Update in-degree for dependent subjects
           adjacency_list[subject.code].each do |dependent_code|
@@ -204,6 +247,22 @@ class DegreePlannerController < ApplicationController
             if in_degree[dependent_code] == 0
               queue << dependent_code unless queue.include?(dependent_code)
             end
+          end
+        end
+
+        # Check if any subjects now meet CP requirements after this semester
+        remaining_subjects.each do |subject|
+          next if queue.include?(subject.code)
+          next if semester_subjects.include?(subject)
+
+          prereqs = subject.prerequisite_codes
+          required_cp = subject.required_cp
+
+          all_prereqs_met = prereqs.all? { |prereq| completed_codes.include?(prereq) || !subject_map.key?(prereq) }
+          cp_requirement_met = cumulative_cp >= required_cp
+
+          if all_prereqs_met && cp_requirement_met && in_degree[subject.code] == 0
+            queue << subject.code unless queue.include?(subject.code)
           end
         end
       end
