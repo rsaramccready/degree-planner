@@ -220,10 +220,10 @@
       </div>
     <% end %>
 
-    <div style="margin-top: 24px;">
-      <div id="error_message" style="display: none; background-color: #fee2e2; border: 1px solid #dc2626; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-weight: 600;">
-        ⚠️ You have selected too many credit points. Please reduce your selection to continue.
-      </div>
+    <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center;">
+      <button type="button" id="randomize_button" onclick="randomizePlan()" style="background-color: #f59e0b !important; color: white !important; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #d97706; cursor: pointer;">
+        🎲 Randomize Plan
+      </button>
       <button type="submit" id="submit_button" style="background-color: #7c3aed !important; color: white !important; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #6d28d9; cursor: pointer;">
         ✓ Generate My Degree Plan →
       </button>
@@ -263,8 +263,6 @@
     // Update grand total
     const grandTotalElement = document.getElementById('grand_total');
     const remainingMessageElement = document.getElementById('remaining_message');
-    const submitButton = document.getElementById('submit_button');
-    const errorMessage = document.getElementById('error_message');
 
     if (grandTotalElement) {
       grandTotalElement.textContent = grandTotal;
@@ -274,26 +272,14 @@
         grandTotalElement.style.color = '#7c3aed'; // Purple
         remainingMessageElement.textContent = `Need ${remaining} more CP`;
         remainingMessageElement.style.color = '#dc2626'; // Red
-        submitButton.disabled = false;
-        submitButton.style.opacity = '1';
-        submitButton.style.cursor = 'pointer';
-        errorMessage.style.display = 'none';
       } else if (remaining < 0) {
         grandTotalElement.style.color = '#ea580c'; // Orange
         remainingMessageElement.textContent = `${Math.abs(remaining)} CP over`;
         remainingMessageElement.style.color = '#ea580c'; // Orange
-        submitButton.disabled = true;
-        submitButton.style.opacity = '0.5';
-        submitButton.style.cursor = 'not-allowed';
-        errorMessage.style.display = 'block';
       } else {
         grandTotalElement.style.color = '#16a34a'; // Green
         remainingMessageElement.textContent = '✓ Complete!';
         remainingMessageElement.style.color = '#16a34a'; // Green
-        submitButton.disabled = false;
-        submitButton.style.opacity = '1';
-        submitButton.style.cursor = 'pointer';
-        errorMessage.style.display = 'none';
       }
     }
 
@@ -372,13 +358,72 @@
     });
   });
 
-  // Prevent form submission if too many CP selected
-  document.getElementById('degree_plan_form').addEventListener('submit', (e) => {
-    const submitButton = document.getElementById('submit_button');
-    if (submitButton.disabled) {
-      e.preventDefault();
-      alert('You have selected too many credit points. Please reduce your selection.');
-      return false;
+  // Randomize plan function
+  function randomizePlan() {
+    const isLaw = courseName.includes("Law");
+    const isIT = courseName.includes("Information Technology");
+
+    // First, uncheck all non-Core checkboxes
+    document.querySelectorAll('.want-checkbox').forEach(checkbox => {
+      const unitType = checkbox.dataset.unitType;
+      if (unitType !== 'Core') {
+        checkbox.checked = false;
+      }
+    });
+
+    // Helper function to get random items from array
+    function getRandomItems(array, count) {
+      const shuffled = [...array].sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, count);
     }
-  });
+
+    // Get checkboxes by unit type
+    function getCheckboxesByType(type) {
+      return Array.from(document.querySelectorAll(`.want-checkbox[data-unit_type="${type}"]`));
+    }
+
+    if (isLaw) {
+      // Law requirements
+      // Advanced Law Electives: Choose 2 (24 CP)
+      const advancedLawCheckboxes = getCheckboxesByType('Advanced_Law_Elective');
+      getRandomItems(advancedLawCheckboxes, 2).forEach(cb => cb.checked = true);
+
+      // QUT You: Choose 4 (24 CP)
+      const qutYouCheckboxes = getCheckboxesByType('QUT_You');
+      getRandomItems(qutYouCheckboxes, 4).forEach(cb => cb.checked = true);
+
+      // Calculate how many General Law Electives needed to reach 384 CP
+      let currentCP = 240 + 24 + 24; // Core + Advanced + QUT You
+      const generalLawCheckboxes = getCheckboxesByType('General_Law_Elective');
+      const neededCP = requiredCP - currentCP;
+      const neededUnits = Math.ceil(neededCP / 12);
+      getRandomItems(generalLawCheckboxes, neededUnits).forEach(cb => cb.checked = true);
+    } else if (isIT) {
+      // IT requirements - pick random from each category
+      // QUT You: 24 CP (2 units)
+      const qutYouCheckboxes = getCheckboxesByType('QUT_You');
+      getRandomItems(qutYouCheckboxes, 2).forEach(cb => cb.checked = true);
+
+      // CS Major sections - pick some from each
+      const csMajorCoreCheckboxes = getCheckboxesByType('CS_Major_Core');
+      const csMajorGeneralCheckboxes = getCheckboxesByType('CS_Major_General_Option');
+      const csMajorAdvancedCheckboxes = getCheckboxesByType('CS_Major_Advanced_Option');
+
+      getRandomItems(csMajorCoreCheckboxes, Math.min(3, csMajorCoreCheckboxes.length)).forEach(cb => cb.checked = true);
+      getRandomItems(csMajorGeneralCheckboxes, Math.min(2, csMajorGeneralCheckboxes.length)).forEach(cb => cb.checked = true);
+      getRandomItems(csMajorAdvancedCheckboxes, Math.min(1, csMajorAdvancedCheckboxes.length)).forEach(cb => cb.checked = true);
+
+      // Complementary studies - pick random electives
+      const csElectives = getCheckboxesByType('Computer_Science_Elective');
+      const isElectives = getCheckboxesByType('Information_Systems');
+      const scienceElectives = getCheckboxesByType('Science_Elective');
+      const mathElectives = getCheckboxesByType('Mathematics_Elective');
+
+      const allElectives = [...csElectives, ...isElectives, ...scienceElectives, ...mathElectives];
+      getRandomItems(allElectives, 7).forEach(cb => cb.checked = true);
+    }
+
+    // Update totals
+    updateTotals();
+  }
 </script>
